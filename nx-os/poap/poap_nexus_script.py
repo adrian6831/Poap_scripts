@@ -42,11 +42,11 @@ versions where upgrading will take time
 # Host name and user credentials
 options = {
    "username": "root",
-   "password": "password",
-   "hostname": "2.1.1.1",
-   "transfer_protocol": "scp",
+   "password": "123456wp",
+   "hostname": "192.168.0.3",
+   "transfer_protocol": "ftp",
    "mode": "hostname",
-   "target_system_image": "nxos.7.0.3.I4.4.bin",
+   "target_system_image": "icnt.7.0.3.I7.1.bin",
 }
 
 
@@ -1113,9 +1113,9 @@ def install_images():
     If two step installation is true, just set the bootvariables and
     do no update startup-config so that step two of POAP is triggered.
     """
-    kickstart_path = os.path.join(options["destination_path"],
+    #kickstart_path = os.path.join(options["destination_path"],
                                   options["destination_kickstart_image"])
-    kickstart_path = kickstart_path.replace("/bootflash", "bootflash:", 1)
+    #kickstart_path = kickstart_path.replace("/bootflash", "bootflash:", 1)
 
     system_path = os.path.join(options["destination_path"],
                                options["destination_system_image"])
@@ -1123,7 +1123,7 @@ def install_images():
 
     poap_log("Installing kickstart and system images")
     poap_log("######### Copying the boot variables ##########")
-    cli("config terminal ; boot kickstart %s" % kickstart_path)
+    cli("config terminal ; boot nos-cn %s" % kickstart_path)
     cli("config terminal ; boot system %s" % system_path)
 
     command_successful = False
@@ -1291,7 +1291,7 @@ def get_version(): #research assignment 1: image version can be seen in this fun
         if result is not None:
             return result.group(1)
     else:
-        result = re.search(r'NXOS.*version\s*(.*)\n', cli_output)
+        result = re.search(r'NOS-CN.*version\s*(.*)\n', cli_output)
         if result is not None:
             return result.group(1)
     poap_log("Unable to get switch version")
@@ -1501,7 +1501,7 @@ def set_next_upgrade_from_upgrade_path(): # research assignment 2: prevent upgra
     # Check the target image
     image_info = re.search("[\w-]+\.(\d+)\.(\d+)\.(\d+)\.[A-Z](\d+)\.(\w+)",
                            options["target_system_image"])
-
+    
     if image_info is None:
         poap_log("Failed to match target image: %s" % options["target_system_image"])
         exit(1)

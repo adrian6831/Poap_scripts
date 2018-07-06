@@ -1,5 +1,5 @@
 #!/bin/env python
-#md5sum="a39fc249d01b49ddee8c119275eaace7"
+#md5sum="6b5261a66e154eca65b76fb1a0d5c49a"
 """
 If any changes are made to this script, please run the below command
 in bash shell to update the above md5sum. This is used for integrity check.
@@ -41,12 +41,16 @@ versions where upgrading will take time
 # --- Start of user editable settings ---
 # Host name and user credentials
 options = {
-   "username": "root",
-   "password": "password",
-   "hostname": "2.1.1.1",
-   "transfer_protocol": "scp",
+   "username": "adruab",
+   "password": "Sigmar",
+   "hostname": "192.168.0.3",
+   "transfer_protocol": "ftp",
    "mode": "hostname",
-   "target_system_image": "nxos.7.0.3.I4.4.bin",
+   "config_path": "/opt/ftpAdruab/",
+   "target_image_path": "/opt/ftpAdruab/",	
+   "target_system_image": "inos-cn.7.0.3.IGC7.0.94.bin",
+   "user_app_path": "/opt/tftpServer/",
+#   "target_system_image": "icnt.7.0.3.I7.1.bin"
 }
 
 
@@ -214,6 +218,7 @@ def set_defaults_and_validate_options():
 
     # User app path
     set_default("user_app_path", "/var/lib/tftpboot/")
+	#set_default("user_app_path", "/opt/tftpServer/")
 
     # MD5 Verification
     set_default("disable_md5", False)
@@ -1074,11 +1079,11 @@ def install_images_7_x():
 
     system_image_path = os.path.join(options["destination_path"],
                                      options["destination_system_image"])
-    system_image_path = system_image_path.replace("/bootflash", "bootflash:", 1)
+    system_image_path = system_image_path.replace("/bootflash/", "bootflash:///", 1)
 
     try:
-        poap_log("config terminal ; boot nxos %s" % system_image_path)
-        cli("config terminal ; boot nxos %s" % system_image_path)
+        poap_log("config terminal ; boot nos-cn %s" % system_image_path)
+        cli("config terminal ; boot nos-cn %s" % system_image_path)
     except Exception as e:
         poap_log("Failed to set NXOS boot variable to %s" % system_image_path)
         abort(str(e))
@@ -1123,8 +1128,8 @@ def install_images():
 
     poap_log("Installing kickstart and system images")
     poap_log("######### Copying the boot variables ##########")
-    cli("config terminal ; boot kickstart %s" % kickstart_path)
-    cli("config terminal ; boot system %s" % system_path)
+    #cli("config terminal ; boot nos-cn %s" % kickstart_path)
+    cli("config terminal ; boot nos-cn %s" % system_path)
 
     command_successful = False
     timeout = 10  # minutes
@@ -1291,7 +1296,7 @@ def get_version(): #research assignment 1: image version can be seen in this fun
         if result is not None:
             return result.group(1)
     else:
-        result = re.search(r'NXOS.*version\s*(.*)\n', cli_output)
+        result = re.search(r'NOS-CN.*version\s*(.*)\n', cli_output)
         if result is not None:
             return result.group(1)
     poap_log("Unable to get switch version")
@@ -1487,7 +1492,8 @@ def set_next_upgrade_from_upgrade_path(): # research assignment 2: prevent upgra
     # 5.0(3)U5(1), 6.0(2)U6(2a), 6.0(2)U6(7), 7.0(3)I3(1)
     upgrade_images = [["n3000-uk9-kickstart.5.0.3.U5.1.bin", "n3000-uk9.5.0.3.U5.1.bin"],
                       ["n3000-uk9-kickstart.6.0.2.U6.2a.bin", "n3000-uk9.6.0.2.U6.2a.bin"],
-                      ["n3000-uk9-kickstart.6.0.2.U6.7.bin", "n3000-uk9.6.0.2.U6.7.bin"]]
+                      ["n3000-uk9-kickstart.6.0.2.U6.7.bin", "n3000-uk9.6.0.2.U6.7.bin"]
+					  ]
 
     # Check currently running image
     version = get_version()
@@ -1499,7 +1505,7 @@ def set_next_upgrade_from_upgrade_path(): # research assignment 2: prevent upgra
     current_idx = find_upgrade_index_from_match(image_info)
 
     # Check the target image
-    image_info = re.search("[\w-]+\.(\d+)\.(\d+)\.(\d+)\.[A-Z](\d+)\.(\w+)",
+    image_info = re.search("[\w-]+\.(\d+)\.(\d+)\.(\d+)\.[A-Z]+(\d+)\.(\d+)\.(\d+)\.(\w+)",
                            options["target_system_image"])
 
     if image_info is None:
@@ -1681,7 +1687,7 @@ def check_multilevel_install(): #research assignment 2: prevent upgrade
     else:
         poap_log("Single image is not set")
         single_image = False
-
+	single_image = True
 
 def invoke_personality_restore():
     """
