@@ -88,16 +88,16 @@ fi
 
 
 if [ -e /etc/dhcp/dhcpd.conf ]; then
-	if [[ "$(cat ./test_file | grep $hostname)" != "" ]]; then
+	if [[ "$(cat /etc/dhcp/dhcpd.conf | grep $hostname)" != "" ]]; then
 		echo "Found old configuration, removing"
-		idx="$(sed -n "/host $hostname {/=" ./test_file)"
+		idx="$(sed -n "/host $hostname {/=" /etc/dhcp/dhcpd.conf)"
 		begin_idx=$idx
-		while [ "$(sed "${idx}q;d" ./test_file)" != "}" ]; do
+		while [ "$(sed "${idx}q;d" /etc/dhcp/dhcpd.conf)" != "}" ]; do
 			idx=$((idx + 1))
 		done 
-		sed -i -e "$begin_idx, ${idx}d" ./test_file
+		sed -i -e "$begin_idx, ${idx}d" /etc/dhcp/dhcpd.conf
 	else 
-		echo -e $output >> ./test_file 
+		echo -e $output >> /etc/dhcp/dhcpd.conf 
 	fi
 	exit 0
 else 
