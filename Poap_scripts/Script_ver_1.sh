@@ -5,15 +5,15 @@ if [ "$(whoami)" != "root" ]; then
         exit -1
 fi
 
-if [ $# -ne 3 ] && [ $# -ne 1 ] && [ $# -ne 5 ] && [ $# -ne 7 ]; then
+if [ $# -ne 3 ] && [ $# -ne 1 ] && [ $# -ne 5 ] && [ $# -ne 7 ] && [ $# -ne 9 ]; then
 	echo --help for help
-	echo "Please enter following parameters in sequence: hostname, dhcp-client-identifier/switch-identifier, router ip, [-ip fixed_ip], [-tftp tftp_server_address]."
+	echo "Please enter following parameters in sequence: hostname, dhcp-client-identifier/switch-identifier, router ip, [-ip fixed_ip], [-tftp tftp_server_address], [-boot bootfile_name]."
 	exit -1
 fi
 
 if [ $# -eq 1 ]; then
 	if [ $1 == "--help" ]; then
-		echo "Please enter following parameters in sequence: hostname, dhcp-client-identifier/switch-identifier, router ip, [-ip fixed_ip], [-tftp tftp_server_address]."
+		echo "Please enter following parameters in sequence: hostname, dhcp-client-identifier/switch-identifier, router ip, [-ip fixed_ip], [-tftp tftp_server_address], [-boot bootfile_name]."
 		exit 0
 	else 
 		echo "Invalid parameters"
@@ -21,6 +21,7 @@ if [ $# -eq 1 ]; then
 	fi
 fi
 
+dummy_bootfile=true
 dummy_bootfile_name="poap_nexus_script.py"
 dummy_tftp=true
 dummy_tftp_server_address="192.168.0.3"
@@ -52,11 +53,22 @@ if [ $# -gt 4 ]; then
 				exit -1
 			fi
 		fi
+		if [ "$elem" == "-boot" ]; then
+			if [ "$dummy_bootfile" == "true" ]; then
+				dummy_bootfile=false
+			else
+				echo "Repeated parameters"
+				exit -1
+			fi
+		fi
 		if [ "$dynamic_ip_address" == "false" ] && [ "$last_var" == "-ip" ]; then
 			fixed_ip_address=$elem
 		fi
 		if [ "$dummy_tftp" == "false" ]  && [ "$last_var" == "-tftp" ]; then
 			tftp_server_address=$elem
+		fi
+		if [ "$dummy_bootfile" == "false" ] && [ "$last_var" == "-boot" ]; then
+			bootfile_name=$elem
 		fi
 		last_var=$elem
 	done
@@ -67,21 +79,21 @@ fi
 if [ "$dynamic_ip_address" == "true" ] ; then
 	output=$" 
 	host $hostname { \n
-	    option dhcp-client-identifier $dhcp_client_identifier, \n
-	    option router $router_ip, \n
-	    option host-name $hostname, \n
-	    option bootfile-name $bootfile_name, \n
-	    option tftp-server-address $tftp_server_address, \n}
+	    option dhcp-client-identifier \"$dhcp_client_identifier\", \n
+	    option router \"$router_ip\", \n
+	    option host-name \"$hostname\", \n
+	    option bootfile-name \"$bootfile_name\", \n
+	    option tftp-server-address \"$tftp_server_address\", \n}\n
 	"
 else 
 	output=$" 
         host $hostname { \n
-            option dhcp-client-identifier $dhcp_client_identifier, \n
-	    option fixed-ip-address $fixed_ip_address, \n
-            option router $router_ip, \n
-            option host-name $hostname, \n
-            option bootfile-name $bootfile_name, \n
-            option tftp-server-address $tftp_server_address, \n}
+            option dhcp-client-identifier \"$dhcp_client_identifier\", \n
+	    option fixed-ip-address \"$fixed_ip_address\", \n
+            option router \"$router_ip\", \n
+            option host-name \"$hostname\", \n
+            option bootfile-name \"$bootfile_name\", \n
+            option tftp-server-address \"$tftp_server_address\", \n}\n
         "
 fi
 
@@ -95,6 +107,7 @@ if [ -e /etc/dhcp/dhcpd.conf ]; then
 		while [ "$(sed "${idx}q;d" /etc/dhcp/dhcpd.conf)" != "}" ]; do
 			idx=$((idx + 1))
 		done 
+		idx=$((idx + 1))
 		sed -i -e "$begin_idx, ${idx}d" /etc/dhcp/dhcpd.conf
 	else 
 		echo -e $output >> /etc/dhcp/dhcpd.conf 
