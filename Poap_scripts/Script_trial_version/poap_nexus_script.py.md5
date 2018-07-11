@@ -44,7 +44,8 @@ options = {
    "password": "Sigmar",
    "hostname": "192.168.0.3",
    "transfer_protocol": "ftp",
-   "mode": "hostname",
+   "mode": "raw",
+   "source_config_file": "config.cfg",
    "config_path": "/opt/ftpAdruab/",
    "target_image_path": "/opt/ftpAdruab/",	
    "target_system_image": "inos-cn.7.0.3.IGC7.0.94.bin",
@@ -1283,7 +1284,6 @@ def set_cfg_file_location():
     options["source_config_file"] = options["source_config_file"].replace("/", "_")
     poap_log("Selected conf file name : %s" % options["source_config_file"])
 
-
 def get_version(): #research assignment 1: image version can be seen in this function. Note r"Str" make "Str" a raw string
     """
     Gets the image version of the switch from CLI.
@@ -1680,13 +1680,14 @@ def check_multilevel_install(): #research assignment 2: prevent upgrade
         set_next_upgrade_from_upgrade_path()
 
     if re.match("nxos.7", options["target_system_image"]) \
-       or re.match("n9000", options["target_system_image"]):
+       or re.match("n9000", options["target_system_image"]) \
+       or re.match("inos-cn.7", options["target_system_image"]):
         poap_log("Single image is set")
         single_image = True
     else:
         poap_log("Single image is not set")
         single_image = False
-	single_image = True
+	#single_image = True
 
 def invoke_personality_restore():
     """

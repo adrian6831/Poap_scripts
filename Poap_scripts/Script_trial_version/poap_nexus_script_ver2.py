@@ -51,6 +51,7 @@ options = {
    "target_image_path": "/opt/ftpAdruab/",	
    "target_system_image": "inos-cn.7.0.3.IGC7.0.94.bin",
    "user_app_path": "/opt/tftpServer/",
+   "enable_upgrade": False,
 #   "target_system_image": "icnt.7.0.3.I7.1.bin"
 }
 
@@ -255,6 +256,9 @@ def set_defaults_and_validate_options():
     set_default("personality_path", "/var/lib/tftpboot")
     set_default("source_tarball", "personality.tar")
     set_default("destination_tarball", options["source_tarball"])
+
+    # Enabling upgrade by default
+    set_default("enable_upgrade", True)
 
     # Check that options are valid
     validate_options()
@@ -1674,11 +1678,13 @@ def check_multilevel_install(): #research assignment 2: prevent upgrade
     """
     global options, single_image
 
-    # User wants to override the midway image
-    if options["midway_system_image"] != "":
-        set_next_upgrade_from_user()
-    else:
-        set_next_upgrade_from_upgrade_path()
+    # If user didn't diable upgrade
+    if options["enable_upgrade"]:
+        # User wants to override the midway image
+        if options["midway_system_image"] != "":
+            set_next_upgrade_from_user()
+        else:
+            set_next_upgrade_from_upgrade_path()
 
     if re.match("nxos.7", options["target_system_image"]) \
        or re.match("n9000", options["target_system_image"]) \
@@ -1688,7 +1694,6 @@ def check_multilevel_install(): #research assignment 2: prevent upgrade
     else:
         poap_log("Single image is not set")
         single_image = False
-	#single_image = True
 
 def invoke_personality_restore():
     """

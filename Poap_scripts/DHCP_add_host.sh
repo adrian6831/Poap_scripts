@@ -5,15 +5,15 @@ if [ "$(whoami)" != "root" ]; then
         exit -1
 fi
 
-if [ $# -ne 3 ] && [ $# -ne 1 ] && [ $# -ne 5 ] && [ $# -ne 7 ] && [ $# -ne 9 ]; then
+if [ $# -ne 2 ] && [ $# -ne 1 ] && [ $# -ne 4 ] && [ $# -ne 6 ] && [ $# -ne 8 ] && [ $# -ne 10 ]; then
 	echo --help for help
-	echo "Please enter following parameters in sequence: hostname, dhcp-client-identifier/switch-identifier, router ip, [-ip fixed_ip], [-tftp tftp_server_address], [-boot bootfile_name]."
+	echo "Please enter following parameters in sequence: hostname, dhcp-client-identifier/switch-identifier, [-r router_ip], [-ip fixed_ip], [-tftp tftp_server_address], [-boot bootfile_name]."
 	exit -1
 fi
 
 if [ $# -eq 1 ]; then
 	if [ $1 == "--help" ]; then
-		echo "Please enter following parameters in sequence: hostname, dhcp-client-identifier/switch-identifier, router ip, [-ip fixed_ip], [-tftp tftp_server_address], [-boot bootfile_name]."
+		echo "Please enter following parameters in sequence: hostname, dhcp-client-identifier/switch-identifier, [-r router_ip], [-ip fixed_ip], [-tftp tftp_server_address], [-boot bootfile_name]."
 		exit 0
 	else 
 		echo "Invalid parameters"
@@ -21,22 +21,23 @@ if [ $# -eq 1 ]; then
 	fi
 fi
 
+#By default, this host is in subnet 172.16.0.0, with 172.16.0.1 
+#as router.
 dummy_bootfile=true
-dummy_bootfile_name="poap_nexus_script.py"
 dummy_tftp=true
-dummy_tftp_server_address="172.16.0.2"
+dummy_router=true
 dynamic_ip_address=true
 fixed_ip_address=0.0.0.0
 
 hostname=$1
 dhcp_client_identifier=$2
-router_ip=$3
-bootfile_name=$dummy_bootfile_name
-tftp_server_address=$dummy_tftp_server_address
+router_ip="172.16.0.1"
+bootfile_name="poap_nexus_script.py"
+tftp_server_address="172.16.0.2"
 
-if [ $# -gt 4 ]; then
+if [ $# -gt 3 ]; then
 	last_var=""
-	for elem in ${@:4}; do
+	for elem in ${@:3}; do
 		if [ "$elem" == "-ip" ]; then
 			if [ "$dynamic_ip_address" == "true" ]; then
 				dynamic_ip_address=false
@@ -61,6 +62,14 @@ if [ $# -gt 4 ]; then
 				exit -1
 			fi
 		fi
+		if [ "$elem" == "-r" ]; then
+			if [ "$dummy_router" == "true" ]; then
+				dummy_router=false 
+			else 
+				echo "Repeated parameters"
+				exit -1
+			fi 
+		fi
 		if [ "$dynamic_ip_address" == "false" ] && [ "$last_var" == "-ip" ]; then
 			fixed_ip_address=$elem
 		fi
@@ -70,34 +79,33 @@ if [ $# -gt 4 ]; then
 		if [ "$dummy_bootfile" == "false" ] && [ "$last_var" == "-boot" ]; then
 			bootfile_name=$elem
 		fi
+		if [ "$dummy_router" == "false" ] && [ "$last_var" == "-r" ]; then
+			router_ip = $elem 
+		fi 
 		last_var=$elem
-	done
-			
-			
+	done		
 fi
 
 if [ "$dynamic_ip_address" == "true" ] ; then
 	output=$" 
 	host $hostname { \n
-	    option dhcp-client-identifier \"$dhcp_client_identifier\", \n
-	    option router \"$router_ip\", \n
-	    option host-name \"$hostname\", \n
-	    option bootfile-name \"$bootfile_name\", \n
-	    option tftp-server-address \"$tftp_server_address\", \n}\n
+		option dhcp-client-identifier \"$dhcp_client_identifier\"; \n
+		option router $router_ip; \n
+		option host-name \"$hostname\"; \n
+		option bootfile-name \"$bootfile_name\"; \n
+		option tftp-server-address $tftp_server_address; \n}\n
 	"
 else 
 	output=$" 
-        host $hostname { \n
-            option dhcp-client-identifier \"$dhcp_client_identifier\", \n
-	    option fixed-ip-address \"$fixed_ip_address\", \n
-            option router \"$router_ip\", \n
-            option host-name \"$hostname\", \n
-            option bootfile-name \"$bootfile_name\", \n
-            option tftp-server-address \"$tftp_server_address\", \n}\n
-        "
+	host $hostname { \n
+		option dhcp-client-identifier \"$dhcp_client_identifier\"; \n
+		option fixed-ip-address $fixed_ip_address; \n
+		option router $router_ip; \n
+		option host-name \"$hostname\"; \n
+		option bootfile-name \"$bootfile_name\"; \n
+		option tftp-server-address $tftp_server_address; \n}\n
+	"
 fi
-
-
 
 if [ -e /etc/dhcp/dhcpd.conf ]; then
 	if [[ "$(cat /etc/dhcp/dhcpd.conf | grep $hostname)" != "" ]]; then
@@ -113,12 +121,12 @@ if [ -e /etc/dhcp/dhcpd.conf ]; then
 	else 
 		echo -e $output >> /etc/dhcp/dhcpd.conf 
 	fi
-	exit 0
-else 
+else
 	echo "File /etc/dhcp/dhcpd.conf does not exist or cannot be accessed"
 	exit -1
 fi
 
-
 service isc-dhcp-server restart
 /etc/init.d/networking restart
+
+exit 0
