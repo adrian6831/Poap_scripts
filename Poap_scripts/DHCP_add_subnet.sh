@@ -26,7 +26,7 @@ if [ $# -eq 1 ]; then
         #--mass along will setup a default subnet for POAP mass configuration; 
         #if you change any of router_addr, tftp_server_addr, 
         #or bootfile, you may not specify it.
-        echo -e "Please enter network_address, netmask, range_start range_end, broadcast_address, [-r router_address], [-tftp tftp_server_address], [-boot bootfile] [--mass] in sequence"
+        echo -e "Please enter network_address, netmask, range_start, range_end, broadcast_address, [-r router_address], [-tftp tftp_server_address], [-boot bootfile] [--mass] in sequence"
         exit 0
     else
         echo "Invalid parameter"

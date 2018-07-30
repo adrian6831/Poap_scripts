@@ -6,6 +6,7 @@ in bash shell to update the above md5sum. This is used for integrity check.
 f=poap_nexus_script.py ; cat $f | sed '/^#md5sum/d' > $f.md5 ; sed -i \
 "s/^#md5sum=.*/#md5sum=\"$(md5sum $f.md5 | sed 's/ .*//')\"/" $f
 """
+#This script can only install inos-cn.7 images to switches.
 
 import glob
 import os
@@ -52,7 +53,6 @@ options = {
    "target_system_image": "inos-cn.7.0.3.IGC7.0.94.bin",
    "user_app_path": "/opt/tftpServer/",
    "enable_upgrade": False,
-#   "target_system_image": "icnt.7.0.3.I7.1.bin"
 }
 
 

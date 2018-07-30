@@ -7,13 +7,13 @@ fi
 
 if [ $# -ne 2 ] && [ $# -ne 1 ] && [ $# -ne 4 ] && [ $# -ne 6 ] && [ $# -ne 8 ] && [ $# -ne 10 ]; then
 	echo --help for help
-	echo "Please enter following parameters in sequence: hostname, dhcp-client-identifier/switch-identifier, [-r router_ip], [-ip fixed_ip], [-tftp tftp_server_address], [-boot bootfile_name]."
+	echo "Please enter following parameters in sequence: hostname, dhcp-client-identifier/switch-identifier, [-r router_ip], [-ip fixed_ip], [-tftp tftp_server_address], [-boot bootfile]."
 	exit -1
 fi
 
 if [ $# -eq 1 ]; then
 	if [ $1 == "--help" ]; then
-		echo "Please enter following parameters in sequence: hostname, dhcp-client-identifier/switch-identifier, [-r router_ip], [-ip fixed_ip], [-tftp tftp_server_address], [-boot bootfile_name]."
+		echo "Please enter following parameters in sequence: hostname, dhcp-client-identifier/switch-identifier, [-r router_ip], [-ip fixed_ip], [-tftp tftp_server_address], [-boot bootfile]."
 		exit 0
 	else 
 		echo "Invalid parameters"
