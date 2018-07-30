@@ -51,7 +51,6 @@ options = {
    "target_image_path": "/opt/ftpAdruab/",	
    "target_system_image": "inos-cn.7.0.3.IGC7.0.94.bin",
    "user_app_path": "/opt/tftpServer/",
-#   "target_system_image": "icnt.7.0.3.I7.1.bin"
 }
 
 

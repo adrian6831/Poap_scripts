@@ -2,7 +2,6 @@ import os
 import sys
 import tkinter as tk
 import collections
-import fileinput
 
 class UI(tk.Frame):
     """
