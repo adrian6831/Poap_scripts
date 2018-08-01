@@ -3,10 +3,9 @@
 """
 If any changes are made to this script, please run the below command
 in bash shell to update the above md5sum. This is used for integrity check.
-f=poap_nexus_script.py ; cat $f | sed '/^#md5sum/d' > $f.md5 ; sed -i \
+f=poaps.py ; cat $f | sed '/^#md5sum/d' > $f.md5 ; sed -i \
 "s/^#md5sum=.*/#md5sum=\"$(md5sum $f.md5 | sed 's/ .*//')\"/" $f
 """
-#This script can only install inos-cn.7 images to switches.
 
 import glob
 import os
@@ -44,7 +43,7 @@ versions where upgrading will take time
 options = {
    "username": "adruab",
    "password": "Sigmar",
-   "hostname": "192.168.0.3",
+   "hostname": "host1", #untested
    "transfer_protocol": "ftp",
    "mode": "raw",
    "source_config_file": "config.cfg",
@@ -53,6 +52,7 @@ options = {
    "target_system_image": "inos-cn.7.0.3.IGC7.0.94.bin",
    "user_app_path": "/opt/tftpServer/",
    "enable_upgrade": False,
+   "skip_single_image_check": True
 }
 
 
@@ -259,6 +259,11 @@ def set_defaults_and_validate_options():
 
     # Enabling upgrade by default
     set_default("enable_upgrade", True)
+
+    #Check whether image is single image by default
+    set_default("skip_single_image_check", False)   
+        #If not set to True, this script can only install inos-cn.7 
+        #images from inspur to switches
 
     # Check that options are valid
     validate_options()
@@ -1670,7 +1675,7 @@ def setup_logging():
     poap_cleanup_script_logs()
 
 
-def check_multilevel_install(): #research assignment 2: prevent upgrade
+def check_multilevel_install(): 
     """
     Checks whether or not the multi-level install procedure is needed. Sets
     multi_step_install to True if it is needed. Also sets single_image to
@@ -1678,22 +1683,25 @@ def check_multilevel_install(): #research assignment 2: prevent upgrade
     """
     global options, single_image
 
-    # If user didn't diable upgrade
+    # If user didn't diable upgrade-->
     if options["enable_upgrade"]:
         # User wants to override the midway image
         if options["midway_system_image"] != "":
             set_next_upgrade_from_user()
         else:
             set_next_upgrade_from_upgrade_path()
-
-    if re.match("nxos.7", options["target_system_image"]) \
-       or re.match("n9000", options["target_system_image"]) \
-       or re.match("inos-cn.7", options["target_system_image"]):
-        poap_log("Single image is set")
+    if options["skip_single_image_check"]:
+        poap_log("options[skip_single_image_check] is set to true, assuming single image")
         single_image = True
     else:
-        poap_log("Single image is not set")
-        single_image = False
+        if re.match("nxos.7", options["target_system_image"]) \
+        or re.match("n9000", options["target_system_image"]) \
+        or re.match("inos-cn.7", options["target_system_image"]):
+            poap_log("Single image is set")
+            single_image = True
+        else:
+            poap_log("Single image is not set")
+            single_image = False
 
 def invoke_personality_restore():
     """

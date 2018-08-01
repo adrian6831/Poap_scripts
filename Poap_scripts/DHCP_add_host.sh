@@ -1,5 +1,6 @@
 #!/bin/bash
 #This is a script helping generating POAP configuration for a switch
+
 if [ "$(whoami)" != "root" ]; then
 	echo "Script must be run as root"
         exit -1
@@ -80,14 +81,14 @@ if [ $# -gt 3 ]; then
 			bootfile_name=$elem
 		fi
 		if [ "$dummy_router" == "false" ] && [ "$last_var" == "-r" ]; then
-			router_ip = $elem 
+			router_ip=$elem 
 		fi 
 		last_var=$elem
 	done		
 fi
 
 if [ "$dynamic_ip_address" == "true" ] ; then
-	output=$" 
+	output=$"\n
 	host $hostname { \n
 		option dhcp-client-identifier \"$dhcp_client_identifier\"; \n
 		option router $router_ip; \n
@@ -96,7 +97,7 @@ if [ "$dynamic_ip_address" == "true" ] ; then
 		option tftp-server-address $tftp_server_address; \n}\n
 	"
 else 
-	output=$" 
+	output=$"\n
 	host $hostname { \n
 		option dhcp-client-identifier \"$dhcp_client_identifier\"; \n
 		option fixed-ip-address $fixed_ip_address; \n
@@ -108,16 +109,17 @@ else
 fi
 
 if [ -e /etc/dhcp/dhcpd.conf ]; then
-	if [[ "$(cat /etc/dhcp/dhcpd.conf | grep $hostname)" != "" ]]; then
+	if [[ "$(cat /etc/dhcp/dhcpd.conf | grep "host $hostname {")" != "" ]]; then
 		echo "Found old configuration, removing"
 		idx="$(sed -n "/host $hostname {/=" /etc/dhcp/dhcpd.conf)"
-		begin_idx=$idx
+		begin_idx=$((idx - 1))
 		while [ "$(sed "${idx}q;d" /etc/dhcp/dhcpd.conf)" != "}" ]; do
 			idx=$((idx + 1))
 		done 
 		idx=$((idx + 1))
 		sed -i -e "$begin_idx, ${idx}d" /etc/dhcp/dhcpd.conf
 		echo -e $output >> /etc/dhcp/dhcpd.conf
+		echo "Done"
 	else 
 		echo -e $output >> /etc/dhcp/dhcpd.conf 
 	fi

@@ -17,7 +17,7 @@ if [ "$(whoami)" != "root" ]; then
 fi
 
 if [[ $# -ne 1  && ( $# -lt 5  ||  $# -gt 12 ) ]]; then 
-    echo "Invalid number of parameters, please use --help for help."
+    echo "Invalid number of parameters $#, please use --help for help."
     exit -1
 fi
 
@@ -47,7 +47,7 @@ router_addr="172.16.0.1"
 tftp_addr="172.16.0.2"
 bootfile="poap_nexus_script.py"
 
-output=$"
+output=$"\n
 subnet $network_addr netmask $netmask {\n
     range $range_start $range_end;\n    
     option broadcast-address $broadcast_addr;\n    
@@ -80,7 +80,7 @@ if [ $# -gt 5 ]; then
         fi
         last_elem=$elem 
     done
-    output=$"
+    output=$"\n
     subnet $network_addr netmask $netmask {\n 
         range $range_start $range_end;\n    
         option broadcast-address $broadcast_addr;\n    
@@ -93,16 +93,17 @@ if [ $# -gt 5 ]; then
 fi 
 
 if [ -e /etc/dhcp/dhcpd.conf ]; then
-	if [[ "$(cat /etc/dhcp/dhcpd.conf | grep $network_addr)" != "" ]]; then
+	if [[ "$(cat /etc/dhcp/dhcpd.conf | grep "subnet $network_addr")" != "" ]]; then
 		echo "Found old configuration, removing"
 		idx="$(sed -n "/subnet $network_addr netmask $netmask {/=" /etc/dhcp/dhcpd.conf)"
-		begin_idx=$idx
+		begin_idx=$((idx - 1))
 		while [ "$(sed "${idx}q;d" /etc/dhcp/dhcpd.conf)" != "}" ]; do
 			idx=$((idx + 1))
 		done 
 		idx=$((idx + 1))
 		sed -i -e "$begin_idx, ${idx}d" /etc/dhcp/dhcpd.conf
 		echo -e $output >> /etc/dhcp/dhcpd.conf
+        echo "Done"
 	else 
 		echo -e $output >> /etc/dhcp/dhcpd.conf 
 	fi

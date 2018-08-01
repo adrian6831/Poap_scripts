@@ -70,11 +70,16 @@ def create_main_interface(master):
     add_host interface or add_subnet interface.
     """
     ui = UI(master)
-    ui.add_button("Add subnet", 0, 0, 
+    ui.add_button("   Add subnet   ", 0, 0, 
         create_new_independent_interface(master, ui, create_add_subnet_interface))
-    ui.add_button("Add host", 0, 1, 
+    ui.add_button("   Add host   ", 0, 1, 
         create_new_independent_interface(master, ui, create_add_host_interface))
-    ui.add_button("Quit", 1, 2, ui.exit)
+    ui.add_button("Remove subnet", 1, 0,
+        create_new_independent_interface(master, ui, create_remove_subnet_interface))
+    ui.add_button("Remove host", 1, 1,
+        create_new_independent_interface(master, ui, create_remove_host_interface))
+        
+    ui.add_button("Quit", 2, 2, ui.exit)
     return ui
 
 
@@ -102,7 +107,7 @@ def create_add_host_interface(master):
     ui.add_button("Confirm", 6, 2, lambda: add_host(ui.entries))
     ui.add_button("Clear", 6, 3, lambda: clear_all_entries(ui))
     ui.add_button("Back to Main", 6, 4, 
-        create_new_independent_interface(master, ui, lambda: create_main_interface(ui)))
+        create_new_independent_interface(master, ui, create_main_interface))
     ui.add_button("Quit", 6, 5, ui.exit)
     
     return ui
@@ -142,6 +147,42 @@ def create_add_subnet_interface(master):
     return ui
 
 
+def create_remove_host_interface(master):
+    """
+    Create a remove host interface. On this interface users may 
+    remove a host config on dhcpd.conf
+    """
+    ui = UI(master)
+
+    ui.add_label("hostname", 0, 0)
+    ui.add_entry("hostname", 0, 1)
+
+    ui.add_button("Confirm", 1, 2, lambda: remove_host(ui.entries))
+    ui.add_button("Back to Main", 1, 3, 
+        create_new_independent_interface(master, ui, create_main_interface))
+    ui.add_button("Quit", 1, 4, ui.exit)
+
+
+def create_remove_subnet_interface(master):
+    """
+    Create a remove subnet interface. On this interface users may 
+    remove a subnet config on dhcpd.conf
+    """
+    ui = UI(master)
+
+    ui.add_label("network_addr", 0, 0)
+    ui.add_label("network_mask", 1, 0)
+
+    ui.add_entry("network_addr", 0, 1)
+    ui.add_entry("network_mast", 1, 1)
+
+    ui.add_button("Confirm", 2, 2, lambda: remove_subnet(ui.entries))
+    ui.add_button("Back to Main", 2, 3, 
+        create_new_independent_interface(master, ui, create_main_interface))
+    ui.add_button("Quit", 2, 4, ui.exit)
+
+
+
 def create_new_independent_interface(master, current_int, func):
     """
     Return a helper function switching to a new interface by destorying current 
@@ -167,6 +208,7 @@ def clear_all_entries(ui):
         e = ui.entries[key]
         e.delete(0, len(e.get()))
 
+
 def add_host(entries):
     """
     Execute script DHCP_add_host.sh with contents of entries as parameters.
@@ -177,6 +219,7 @@ def add_host(entries):
     args = entries_parser(entries)
     execute_sys_cmd(args, "../DHCP_add_host.sh", True) #please specify the path to DHCP_add_host.sh here
 
+
 def add_subnet(entries):
     """
     Execute script DHCP_add_subnet.sh with contents of entries as parameters.
@@ -186,6 +229,29 @@ def add_subnet(entries):
     """
     args = entries_parser(entries)
     execute_sys_cmd(args, "../DHCP_add_subnet.sh", True)   #please specify the path to DHCP_add_subnet.sh here
+
+
+def remove_host(entries):
+    """
+    Execute script DHCP_delete_host.sh with contents of entries as parameters.
+
+    Parameters:
+        entries: a dictionary whose contents are parameters
+    """
+    args = entries_parser(entries)
+    execute_sys_cmd(args, "../DHCP_delete_host.sh", True)   ##please specify the path to DHCP_delete_host.sh here
+
+
+def remove_subnet(entries):
+    """
+    Execute script DHCP_delete_subnet.sh with contents of entries as parameters.
+
+    Parameters:
+        entries: a dictionary whose contents are parameters
+    """
+    args = entries_parser(entries)
+    execute_sys_cmd(args, "../DHCP_delete_subnet.sh", True)   ##please specify the path to DHCP_delete_subnet.sh here
+
 
 def entries_parser(entries):
     """
@@ -222,14 +288,17 @@ def execute_sys_cmd(args, cmd, is_script = False):
         script_name = cmd
         if os.access(script_name, os.X_OK):
             script_name += args_to_string(args)
-            os.system(script_name)
+            if os.system(script_name) == 0:
+                return 0
         else:
-            print("Script %s cannot be run with current\
-                privilage level. Try re-run this script as root."\
+            print("Script %s cannot be found or run with current privilage level. Try re-run this script as root."\
                 % script_name)
     else:
         cmd += args_to_string(args)
-        os.system(cmd)
+        if os.system(cmd) == 0:
+            return 0
+    return -1
+
 
 
 def args_to_string(args):
@@ -243,9 +312,15 @@ def args_to_string(args):
 
 
 def main():
-    execute_sys_cmd([], "./DHCP_init.sh", True)
-    UIroot = tk.Tk()
-    ui = create_main_interface(UIroot)
-    ui.mainloop()
+    if execute_sys_cmd([], "../DHCP_init.sh", True) == 0 :
+        UIroot = tk.Tk()
+        ui = create_main_interface(UIroot)
+        ui.mainloop()
+        exit(0)
+    else:
+        print("Some error occurs")
 
 main()
+
+
+#TODO: set definite relative path
