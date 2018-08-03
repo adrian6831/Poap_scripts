@@ -1,0 +1,15 @@
+Options:
+    "username": username of ftp server
+    "password": password of the ftp server
+    "hostname": hostname or ip address (when there is no DNS available) of ftp server
+    "transfer_protocol": "ftp" (transfer protocol; default to be ftp and should not be changed)
+    "mode": "raw" (mode of configuration; default to be "raw" and should not be changed)
+    "source_config_file": name of the configuration file of switch, usually ending with cfg
+    "config_path": path to the configuration file of switch
+    "target_image_path": path to the switch image to be installed
+    "target_system_image": image name
+    "user_app_path": path to root directory of tftp server, where the POAP nexus script lies
+    "enable_upgrade": True to enable upgrade, False to skip it.
+    "skip_single_image_check": True to skip checking of single image, False to allow it.
+
+For more detail, please refer to the comments in poap.py.

@@ -1,0 +1,43 @@
+This repo contains a set of scripts helping configuring POAP. It provides a GUI 
+implemented by tkinter to setup dhcp servers and POAP nexus scripts. It includes
+following scripts:
+
+    Handler/prime.py: the master script that create a GUI to receive configuration 
+        parameters, parse them into bash arguments, and run following bash scripts with 
+        them. If any script below is missing, this script will stop working.
+    Poap_nexus_scripts/poap.py: a templete POAP nexus script. It will not be executed
+        by prime.py but uploaded to switches. This script was originally pulled from 
+        git repo https://github.com/datacenter/nexus9000.git under 
+        nexus9000/nx-os/poap/poap.py. I made a little modification, adding options
+        "enable_upgrade" and "skip_single_image_check". 
+    DHCP_add_host.sh: adding a host block with POAP configuration to dhcpd.conf 
+        (assuming under /etc/dhcp/) enabling a switch with the specific
+        dhcp-client-identifier/switch-identifier to be setup with POAP.
+    DHCP_add_subnet.sh: adding a subnet block with POAP configuration to dhcpd.conf
+        (assuming under /etc/dhcp/) enabling switches receiving ip from the pool
+        within this block to be setup with POAP.
+    DHCP_delete_host.sh: removing a host block from dhcpd.conf, no matter it 
+        contains POAP configuration or not.
+    DHCP_delete_subnet.sh: removing a subnet block from dhcpd.conf, no matter it 
+        contains POAP configuration or not.
+    DHCP_init.sh: init dhcpd.conf for POAP process. It will overwrite the original
+        dhcpd.conf but also warn users before doing so. Users may decide whether to 
+        proceed or not.
+    DHCP_reset.sh: straightly reset dhcpd.conf to the intial status. It has the same 
+        effect as running DHCP_init.sh and choose "yes" when asked whether overrite 
+        the original dhcpd.conf. 
+    Poap_script_config.sh: configure a POAP nexus script with POAP_nexus_scripts/poap.py
+        as templete. It will create a copy of poap.py and modify that copy with 
+        parameters specified. It will not work if POAP_nexus_scripts/poap.py is missing. 
+
+All shell scripts (ending with .sh) but Poap_script_config have helping functions and 
+sufficient error catching mechanism to be run independently. So if you just want to 
+delete a host block, you may just run DHCP_delete_host.sh with parameters required.
+
+Current limitations:
+    1. prime.py find other scripts with relative paths hardcoded. If structure of this 
+    directory is changed or some scripts are moved to different locations, you need 
+    to change those relative paths prime.py.
+    2. Some shell scripts uses command "sed", which acts very differently in GNU
+    and BSD/OS. I wrote those scripts in Ubuntu Desktop so those "sed" are in 
+    GNU syntax. If you want to run them on BSD/OS, you'll need some changes.

@@ -86,7 +86,7 @@ if [ $# -gt 5 ]; then
         option broadcast-address $broadcast_addr;\n    
         default-lease-time 3600;\n    
         max-lease-time 7200;\n    
-        option bootfile_name \"$bootfile\";\n    
+        option bootfile-name \"$bootfile\";\n    
         option routers $router_addr;\n    
         option tftp-server-address $tftp_addr;\n}\n
     " 

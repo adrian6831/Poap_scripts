@@ -2,6 +2,7 @@ import os
 import sys
 import tkinter as tk
 import collections
+from shutil import copyfile
 
 class UI(tk.Frame):
     """
@@ -78,8 +79,10 @@ def create_main_interface(master):
         create_new_independent_interface(master, ui, create_remove_subnet_interface))
     ui.add_button("Remove host", 1, 1,
         create_new_independent_interface(master, ui, create_remove_host_interface))
-        
-    ui.add_button("Quit", 2, 2, ui.exit)
+    ui.add_button("Create new poap nexus script", 2, 2,
+        create_new_independent_interface(master, ui, create_config_new_poap_nexus_script_interface))
+
+    ui.add_button("Quit", 2, 3, ui.exit)
     return ui
 
 
@@ -158,9 +161,10 @@ def create_remove_host_interface(master):
     ui.add_entry("hostname", 0, 1)
 
     ui.add_button("Confirm", 1, 2, lambda: remove_host(ui.entries))
-    ui.add_button("Back to Main", 1, 3, 
+    ui.add_button("Clear", 1, 3, lambda: clear_all_entries(ui))
+    ui.add_button("Back to Main", 1, 4, 
         create_new_independent_interface(master, ui, create_main_interface))
-    ui.add_button("Quit", 1, 4, ui.exit)
+    ui.add_button("Quit", 1, 5, ui.exit)
 
 
 def create_remove_subnet_interface(master):
@@ -177,10 +181,36 @@ def create_remove_subnet_interface(master):
     ui.add_entry("network_mast", 1, 1)
 
     ui.add_button("Confirm", 2, 2, lambda: remove_subnet(ui.entries))
-    ui.add_button("Back to Main", 2, 3, 
+    ui.add_button("Clear", 2, 3, lambda: clear_all_entries(ui))
+    ui.add_button("Back to Main", 2, 4, 
         create_new_independent_interface(master, ui, create_main_interface))
-    ui.add_button("Quit", 2, 4, ui.exit)
+    ui.add_button("Quit", 2, 5, ui.exit)
 
+
+def create_config_new_poap_nexus_script_interface(master):
+    """
+    Create a interface to config a POAP nexus script. "name" is the
+    file name (including path) of the script being created. poap.py 
+    under Poap_nexus_scripts serves as the templet. So it is not 
+    recommanded to change its "options" block.
+    """
+    ui = UI(master)
+
+    labels = ["name", "ftp_server_username", "ftp_server_password", "ftp_server_hostname", "source_config_file", "config_path", "target_image_path",
+        "target_system_image", "user_app_path", "enable_upgrade",
+        "skip_single_image_check"]
+
+    idx = 0
+    for label in labels:
+        ui.add_label(label, idx, 0)
+        ui.add_entry(label, idx, 1)
+        idx += 1
+    
+    ui.add_button("Confirm", idx, 2, lambda: create_new_poap_nexus_script(ui.entries))
+    ui.add_button("Clear", idx, 3, lambda: clear_all_entries(ui))
+    ui.add_button("Back to Main", idx, 4, 
+        create_new_independent_interface(master, ui, create_main_interface))
+    ui.add_button("Quit", idx, 5, ui.exit)
 
 
 def create_new_independent_interface(master, current_int, func):
@@ -223,9 +253,6 @@ def add_host(entries):
 def add_subnet(entries):
     """
     Execute script DHCP_add_subnet.sh with contents of entries as parameters.
-
-    Parameters:
-        entries: a dictionary whose contents are parameters
     """
     args = entries_parser(entries)
     execute_sys_cmd(args, "../DHCP_add_subnet.sh", True)   #please specify the path to DHCP_add_subnet.sh here
@@ -234,9 +261,6 @@ def add_subnet(entries):
 def remove_host(entries):
     """
     Execute script DHCP_delete_host.sh with contents of entries as parameters.
-
-    Parameters:
-        entries: a dictionary whose contents are parameters
     """
     args = entries_parser(entries)
     execute_sys_cmd(args, "../DHCP_delete_host.sh", True)   ##please specify the path to DHCP_delete_host.sh here
@@ -245,13 +269,27 @@ def remove_host(entries):
 def remove_subnet(entries):
     """
     Execute script DHCP_delete_subnet.sh with contents of entries as parameters.
-
-    Parameters:
-        entries: a dictionary whose contents are parameters
     """
     args = entries_parser(entries)
-    execute_sys_cmd(args, "../DHCP_delete_subnet.sh", True)   ##please specify the path to DHCP_delete_subnet.sh here
+    execute_sys_cmd(args, "../DHCP_delete_subnet.sh", True)   #Please specify the path to DHCP_delete_subnet.sh here
 
+def create_new_poap_nexus_script(entries): 
+    """
+    Execute Script Poap_script_config.sh with contents of entries as parameters.
+    """
+    name = entries["name"].get()
+    if os.path.isfile(name):
+        print("File %s exists." % name)
+        return 0
+    try:
+        copyfile("../Poap_nexus_scripts/poap.py", name) #Please specify the path to poap.py here
+    except IOError:
+        print("IO error occurs, please check your filename and directory entries.")
+        return
+    args = [name] + entries_parser(entries)
+    if execute_sys_cmd(args, "../Poap_script_config.sh", True) != 0: #Please specify the path to Poap_script_config.sh here
+        print("Cannot execute Poap_script_config.sh, removing newly created poap nexus script")
+        execute_sys_cmd([name], "rm")
 
 def entries_parser(entries):
     """
@@ -269,6 +307,8 @@ def entries_parser(entries):
                 ret.append("-boot " + entries.get(key).get())
             elif key == "fixed_ip":
                 ret.append("-ip " + entries.get(key).get())
+            elif key == "name":
+                continue
             else:
                 ret.append(entries[key].get())
     return ret
