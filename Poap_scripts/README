@@ -1,5 +1,5 @@
 This repo contains a set of scripts helping configuring POAP. It provides a GUI 
-implemented by tkinter to setup dhcp servers and POAP nexus scripts. It includes
+implemented by tkinter to setup DHCP servers and POAP nexus scripts. It includes
 following scripts:
 
     Handler/prime.py: the master script that create a GUI to receive configuration 
